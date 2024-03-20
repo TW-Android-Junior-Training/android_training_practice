@@ -20,18 +20,53 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        val keystorePropertiesFile = rootProject.file("keystore.properties")
+        val keystoreProperties = Properties()
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+        create("debug_sign") {
+            keyAlias = keystoreProperties["debugKeyAlias"] as String
+            keyPassword = keystoreProperties["debugKeyPassword"] as String
+            storeFile = rootProject.file(keystoreProperties["debugStoreFile"] as String)
+            storePassword = keystoreProperties["debugStorePassword"] as String
+        }
+
+        create("release_sign") {
+            keyAlias = keystoreProperties["releaseKeyAlias"] as String
+            keyPassword = keystoreProperties["releaseKeyPassword"] as String
+            storeFile = rootProject.file(keystoreProperties["releaseStoreFile"] as String)
+            storePassword = keystoreProperties["releaseStorePassword"] as String
+        }
+    }
+
     buildTypes {
         getByName("debug") {
+            signingConfig = signingConfigs["debug_sign"]
             isMinifyEnabled = false
         }
 
         getByName("release") {
+            signingConfig = signingConfigs["release_sign"]
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "$project.rootDir/tools/proguard-rules.pro"
             )
+        }
+    }
+
+    flavorDimensions.add("env")
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+        }
+        create("prod") {
+            dimension = "env"
+            applicationIdSuffix = ".prod"
+            versionNameSuffix = "-prod"
         }
     }
 
